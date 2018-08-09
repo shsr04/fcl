@@ -1,0 +1,107 @@
+;;; fcl scanner
+
+(define-structure (Token
+		(constructor token.new (name payl))
+	)
+	name	; symbol
+	payl	; string|number
+)
+(define (Token.unpack token)
+	(list (token-name token) (token-payl token))
+)
+; scan : string,number->[Token]
+(define (scan input0)
+	; take-while : string,number,predicate -> list
+	(define (take-while str i e)
+		(let loop ((a i))
+			(let ((c (string-ref str a)))
+				(if (e c)
+					(cons c (loop (+ a 1)))
+					'()
+				)
+			)
+		)
+	)
+	; takenum : string,number -> numeric-string
+	(define (takenum str i)
+		(list->string
+			(take-while str i char-numeric?)
+		)
+	)
+	; takealnum : string,number -> string
+	(define (takealnum str i)
+		(list->string
+			(take-while str i char-alphanumeric?)
+		)
+	)
+	(define (nextindex str i c)
+		(let loop ((a i))
+			(if (< a (string-length str))
+				(if (eq? (string-ref str a) c)
+					a
+					(loop (+ a 1))
+				)
+				(string-length str)
+			)
+		)
+	)
+
+	(call/cc
+		(lambda (cont)
+			(let scan-loop ((input input0) (i 0) (l 1))
+				(define j (string-length input))
+				;(if debug.scan (fmt "scan  |" (substring input i j)))
+				(if (< i j)
+					(let ((c (string-ref input i)))
+						(cond
+							((char-whitespace? c) (scan-loop input (+ i 1) (if (eq? c #\newline) (+ l 1) l)))
+							((eq? c #\%) (scan-loop input (+ (nextindex input (+ i 1) #\%) 1) l))
+							((char-numeric? c)
+								(let* ((n (takenum input i)) (len (string-length n)))
+									(if debug.scan (fmt "got number" n))
+									(cons (token.new 'number (string->number (substring input i (+ i len)))) (scan-loop input (+ i len) l))
+								)
+							)
+							((char-alphabetic? c)
+								(let* ((w (takealnum input i)) (len (string-length w)))
+									(if debug.scan (fmt "got word" w))
+									(cons (token.new 'word (substring input i (+ i len))) (scan-loop input (+ i len) l))
+								)
+							)
+							(else
+								(cons
+									(token.new
+										(case c
+											((#\=) 'equal)
+											((#\;) 'semicolon)
+											((#\,) 'comma)
+											((#\() 'left-par)
+											((#\)) 'right-par)
+											((#\*) 'star)
+											((#\/) 'slash)
+											((#\+) 'plus)
+											((#\-) 'minus)
+											((#\|) 'bar)
+											((#\~) 'tilde)
+											((#\!) 'bang)
+											((#\>) 'greater)
+											((#\<) 'less)
+											((#\:) 'colon)
+											(else
+												(fmt "unknown symbol" c "in line" l)
+												(cont '!scan-error)
+											)
+										)
+										'()
+									)
+									(scan-loop input (+ i 1) l)
+								)
+							)
+						)
+					)
+					(cons (token.new 'eof '()) '())
+				)
+			)
+		)		
+	)
+)

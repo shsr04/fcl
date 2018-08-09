@@ -1,0 +1,57 @@
+=== fcl compiler ===
+
+This compiler is written entirely in Scheme.
+
+- Scheme-native primitive scanner
+- recursive-descent LL(1) parser
+- table-driven semantic checker
+
+
+=== The fcl language ===
+Example code:
+
+    fac(n) | n>0 : 1 = n*fac(n-1);
+
+The declaration of a function consists of:
+    - the function name
+    - an optional parameter list
+    - an optional guard expression
+        - if a guard is given, an optional terminal value
+    - the function body expression
+
+= Parameters =
+A function with no parameters could simply be written like this:
+    x = 5;
+x is a function of the value 5.
+
+= Guard =
+A function can be guarded against a boolean expression.
+
+    lessThanFive(n) | n<5 = 1;
+
+The terminal value will be emitted if the guard expression is false.
+
+    isEven(n) | n!1 : 0 = isOdd(n-1);
+    isOdd(n) | n!1 : 1 = isEven(n-1);
+    x = isEven(5);
+
+The above program should run as follows:
+    => x
+    => isEven(5)
+    => isOdd(4)
+    => isEven(3)
+    => isOdd(2)
+    => isEven(1)
+    <= isEven(1) [0]
+    ...
+    <= x [0]
+
+= Function body =
+Every function body has an integer value, which is computed from the body expression.
+
+
+== Sample programs ==
+fac(n) | n > 0 : 1 = n*fac(n-1);
+
+fib(n) | n > 2 : 1 = fib(n-2)+fib(n-1);
+
