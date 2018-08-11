@@ -1,10 +1,22 @@
-=== fcl compiler ===
+==== fcl compiler ====
 
 This compiler is written entirely in Scheme.
 
 - Scheme-native primitive scanner
 - recursive-descent LL(1) parser
 - table-driven semantic checker
+- stack-based code generator
+
+
+=== Usage ===
+To load the program into MIT/GNU Scheme and compile your file from fcl to C, run this command:
+
+    > echo y | scheme --load Compiler.scm --eval '(begin (compile "myfile.fcl" "myfile.c" fcl-to-c) (exit))'
+
+After generating the code, the program will immediately close.
+
+
+To include the compiler tools in other Scheme programs, simply use the (load ...) expression.
 
 
 === The fcl language ===
@@ -12,7 +24,7 @@ Example code:
 
     fac(n) | n>0 : 1 = n*fac(n-1);
 
-The declaration of a function consists of:
+The definition of a function consists of:
     - the function name
     - an optional parameter list
     - an optional guard expression
@@ -25,7 +37,8 @@ A function with no parameters could simply be written like this:
 x is a function of the value 5.
 
 = Guard =
-A function can be guarded against a boolean expression.
+A function can be guarded against a boolean expression. 
+There are four boolean operators: ~ (equal), ! (not equal), > (greater than) and < (less than).
 
     lessThanFive(n) | n<5 = 1;
 
@@ -47,11 +60,42 @@ The above program should run as follows:
     <= x [0]
 
 = Function body =
-Every function body has an integer value, which is computed from the body expression.
+A function body has an integer value, which is computed from the body expression.
+There are four integer operators: +, -, * and /.
+
+A function definition ends with a semicolon.
 
 
-== Sample programs ==
+== Sample program ==
 fac(n) | n > 0 : 1 = n*fac(n-1);
 
 fib(n) | n > 2 : 1 = fib(n-2)+fib(n-1);
 
+gcd(a,b) | a!b : a = gcd1(a,b);
+gcd1(a,b) | a>b : gcd2(a,b) = gcd(a-b,b);
+gcd2(a,b) = gcd(a,b-a);
+
+== Sample C output ==
+int fac(int n) {
+  if (n>0)
+    return n*fac(n-1);
+  else return 1;
+}
+int fib(int n) {
+  if (n>2)
+    return fib(n-2)+fib(n-1);
+  else return 1;
+}
+int gcd(int a,int b) {
+  if (a!=b)
+    return gcd1(a,b);
+  else return a;
+}
+int gcd1(int a,int b) {
+  if (a>b)
+    return gcd(a-b,b);
+  else return gcd2(a,b);
+}
+int gcd2(int a,int b) {
+    return gcd(a,b-a);
+}

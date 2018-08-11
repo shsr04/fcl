@@ -168,11 +168,7 @@
 				(cons (+ i 1) (cons (node.new 'val (getp i)) s))
 			)
 			(else 
-				(descend-into FunctionValue i s
-					(lambda (a l)
-						(cons a l)
-					)
-				)
+				(FunctionValue i s)
 			)
 		)
 	)
@@ -198,7 +194,7 @@
 		(descend-into Expression i s
 			(lambda (a l)
 				(if (or (eq a 'tilde) (eq a 'bang) (eq a 'greater) (eq a 'less))
-					(descend-into Expression (+ a 1) s
+					(descend-into Expression (+ a 1) l
 						(lambda (b l)
 							(cons b 
 								(cons 
@@ -231,17 +227,17 @@
 		)
 	)
 	(define (Expressions i s)
-		(descend-into Expression i s
+		(descend-into Expression i (cons (node.new 'begin-term '()) s)
 			(lambda (a l)
 				(if (eq a 'comma)
-					(Expressions (+ a 1) l)
-					(cons a l)
+					(Expressions (+ a 1) (cons (node.new 'end-term '()) l))
+					(cons a (cons (node.new 'end-term '()) l))
 				)
 			)
 		)
 	)
 	(define (Identifier i s)
-		(if debug.parse (fmt "Id" i (token-name (list-ref tokens i))))
+		(if debug.parse (fmt "Id" i (getp i)))
 		(if (eq i 'word)
 			(cons (+ i 1) s)
 			(cons (- i) s)

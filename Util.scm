@@ -2,16 +2,18 @@
 
 ; read-file : string->string
 (define (read-file filename)
-	(let ((inp (open-input-file filename)))
-		(let loop ((l (read-line inp)))
-			(if (eof-object? l)
-				(begin
-					(close-input-port inp)
-					""
-				)
-				(string-append l (loop (read-line inp)))
-			)
-		) 
+	(let* ((inp (open-input-file filename)) (r (read-string (char-set) inp)))
+		(close-input-port inp)
+		r
+	)
+)
+
+; write-file : string,string->[]
+(define (write-file filename content)
+	(let ((outp (open-output-file filename)))
+		(write-string content outp)
+		(close-output-port outp)
+		'()
 	)
 )
 
